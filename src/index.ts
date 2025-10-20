@@ -9,7 +9,7 @@ export default function({ config }: { config: any }) {
   // Initialize server
   const server = new Server(
     {
-      name: "autoencoderThinkingMCP",
+      name: "EncoderThinkingMCP",
       version: "1.0.0",
     },
     {
@@ -360,7 +360,7 @@ def detect_anomalies(model, data, threshold=0.1):
   // Register the tool
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: [{
-      name: "autoencoderThinkingMCP",
+      name: "EncoderThinkingMCP",
       description: "Advanced ML training reasoning tool with multiple strategies including Beam Search and Monte Carlo Tree Search for autoencoder development",
       inputSchema: {
         type: "object",
@@ -415,7 +415,7 @@ def detect_anomalies(model, data, threshold=0.1):
 
   // Handle requests
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    if (request.params.name !== "autoencoderThinkingMCP") {
+    if (request.params.name !== "EncoderThinkingMCP") {
       return {
         content: [{
           type: "text",

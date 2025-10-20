@@ -1,10 +1,10 @@
-# AutoencoderThinkingMCP
+# EncoderThinkingMCP
 
-An advanced Model Context Protocol (MCP) server designed to help LLMs think like machine learning engineers and guide step-by-step autoencoder development.
+An advanced Model Context Protocol (MCP) server designed to help LLMs think like machine learning engineers and guide step-by-step encoder-decoder development.
 
-**AutoencoderThinkingMCP** is an adaptation of the PentestThinkingMCP architecture, repurposed for machine learning workflows. It provides:
+**EncoderThinkingMCP** is an adaptation of the PentestThinkingMCP architecture, repurposed for machine learning workflows. It provides:
 - Automated ML training path planning using Beam Search and Monte Carlo Tree Search (MCTS)
-- Step-by-step reasoning for autoencoder development and training
+- Step-by-step reasoning for encoder-decoder development and training
 - Training step scoring and prioritization
 - Tool recommendations for each step (e.g., PyTorch, TensorFlow, scikit-learn)
 - Framework-specific code generation and prompts
@@ -12,11 +12,11 @@ An advanced Model Context Protocol (MCP) server designed to help LLMs think like
 
 ---
 
-## What is AutoencoderThinkingMCP?
+## What is EncoderThinkingMCP?
 
-**AutoencoderThinkingMCP** is an advanced Model Context Protocol (MCP) server designed to empower both human and AI ML engineers. It provides:
+**EncoderThinkingMCP** is an advanced Model Context Protocol (MCP) server designed to empower both human and AI ML engineers. It provides:
 - Automated ML training path planning using Beam Search and Monte Carlo Tree Search (MCTS)
-- Step-by-step reasoning for autoencoder development, training, and evaluation
+- Step-by-step reasoning for encoder-decoder development, training, and evaluation
 - Training step scoring and prioritization
 - Tool recommendations for each step (e.g., PyTorch, TensorFlow, Keras, scikit-learn)
 - Framework-specific code generation and LLM prompts
@@ -50,7 +50,7 @@ An advanced Model Context Protocol (MCP) server designed to help LLMs think like
 ## How does it work?
 
 1. **Input:**  
-   You (or your AI) provide the current training step/state (e.g., "Start autoencoder training with MNIST dataset").
+   You (or your AI) provide the current training step/state (e.g., "Start encoder-decoder training with MNIST dataset").
 2. **Reasoning:**  
    The server uses Beam Search or MCTS to explore possible next steps, scoring and prioritizing them.
 3. **Output:**  
@@ -61,7 +61,7 @@ An advanced Model Context Protocol (MCP) server designed to help LLMs think like
 ## Example Workflow: Training an Autoencoder
 
 1. **Data Preparation:**  
-   Input: `trainingStep: "Start autoencoder training with MNIST dataset"`  
+   Input: `trainingStep: "Start encoder-decoder training with MNIST dataset"`  
    Output: `Normalize dataset and split into train/val/test` (tools: pandas, scikit-learn)
 2. **Model Architecture:**  
    Input: `trainingStep: "Normalize dataset and split into train/val/test"`  
@@ -87,8 +87,8 @@ An advanced Model Context Protocol (MCP) server designed to help LLMs think like
 ## Installation
 
 ```sh
-git clone https://github.com/ibrahimsaleem/AutoencoderThinkingMCP.git
-cd AutoencoderThinkingMCP
+git clone https://github.com/ibrahimsaleem/EncoderThinkingMCP.git
+cd EncoderThinkingMCP
 npm install
 npm run build
 ```
@@ -101,9 +101,9 @@ npm run build
   ```json
   {
     "mcpServers": {
-      "autoencoderThinkingMCP": {
+      "EncoderThinkingMCP": {
         "command": "node",
-        "args": ["path/to/autoencoderThinkingMCP/dist/index.js"]
+        "args": ["path/to/EncoderThinkingMCP/dist/index.js"]
       }
     }
   }
@@ -114,7 +114,7 @@ npm run build
 
 ```json
 {
-  "trainingStep": "Start autoencoder training with MNIST dataset",
+  "trainingStep": "Start encoder-decoder training with MNIST dataset",
   "stepNumber": 1,
   "totalSteps": 8,
   "nextStepNeeded": true,
@@ -173,4 +173,48 @@ npm run build
 ## License
 
 MIT
+
+---
+
+## Parameters and MCP Usage
+
+### Parameters
+
+- **trainingStep** (string, required): Current action/step description.
+- **stepNumber** (integer 1-8, required): Current step in the pipeline.
+- **totalSteps** (integer = 8, required): Must be 8 for the built-in autoencoder flow.
+- **nextStepNeeded** (boolean, required): Whether another step should be proposed.
+- **datasetPath** (string, optional): Path to training data file/folder.
+- **testDataPath** (string, optional): Path to test data.
+- **framework** (string, optional): One of `pytorch`, `tensorflow`, `keras`. Default: `pytorch`.
+- **projectFolder** (string, optional): Folder to write logs/artifacts. Default: `./autoencoder_project`.
+- **strategyType** (string, optional): One of `beam_search`, `mcts`. Default from config: `beam_search`.
+
+### Server runtime and outputs
+
+- Creates `steps.txt` in `projectFolder` and appends each step summary.
+- Appends JSON entries to `training_log.json` in `projectFolder` with scores, strategy, paths, and timestamps.
+- Returns enhanced response with `currentStep`, `nextStep`, `toolsNeeded`, `recommendedCode`, and `promptForLLM`.
+
+### Run locally (manual)
+
+```sh
+npm install
+npm run build
+node dist/index.js
+```
+
+If using an MCP-aware client, point the client to `node` with `dist/index.js` as the entry as shown in the Usage section.
+
+### Switching strategies and frameworks
+
+- To use Beam Search explicitly: set `"strategyType": "beam_search"`.
+- To use MCTS: set `"strategyType": "mcts"`.
+- To switch frameworks provide `framework: "tensorflow"` or `"keras"`.
+
+### MCP client hints
+
+- MCP tool name: `EncoderThinkingMCP`.
+- Ensure Node.js 16+ is available on the client host.
+- On Windows, prefer absolute paths for `datasetPath` if the client sandbox differs from the server.
 

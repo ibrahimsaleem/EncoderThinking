@@ -5,58 +5,57 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
-  Tool,
 } from "@modelcontextprotocol/sdk/types.js";
 import chalk from 'chalk';
 
 class ReasonerServer {
   constructor() {
-    this.attackSteps = [];
+    this.trainingSteps = [];
     this.branches = {};
   }
 
   validateInput(input) {
     const data = input;
-    if (!data.attackStep || typeof data.attackStep !== 'string') {
-      throw new Error('Invalid attackStep: must be a string');
+    if (!data.trainingStep || typeof data.trainingStep !== 'string') {
+      throw new Error('Invalid trainingStep: must be a string');
     }
-    if (!data.attackStepNumber || typeof data.attackStepNumber !== 'number') {
-      throw new Error('Invalid attackStepNumber: must be a number');
+    if (!data.stepNumber || typeof data.stepNumber !== 'number') {
+      throw new Error('Invalid stepNumber: must be a number');
     }
-    if (!data.totalAttackSteps || typeof data.totalAttackSteps !== 'number') {
-      throw new Error('Invalid totalAttackSteps: must be a number');
+    if (!data.totalSteps || typeof data.totalSteps !== 'number') {
+      throw new Error('Invalid totalSteps: must be a number');
     }
-    if (typeof data.nextAttackStepNeeded !== 'boolean') {
-      throw new Error('Invalid nextAttackStepNeeded: must be a boolean');
+    if (typeof data.nextStepNeeded !== 'boolean') {
+      throw new Error('Invalid nextStepNeeded: must be a boolean');
     }
     return true;
   }
 
-  formatAttackStep(attackStepData) {
-    const { attackStepNumber, totalAttackSteps, attackStep, asset, recommendedTool, critical } = attackStepData;
+  formatAttackStep(trainingStepData) {
+    const { trainingStepNumber, totalSteps, trainingStep, asset, recommendedTool, critical } = trainingStepData;
     const prefix = critical ? chalk.red('🔥 Critical Path') : chalk.blue('🛡️ Attack Step');
-    const header = `${prefix} ${attackStepNumber}/${totalAttackSteps}`;
-    const border = '─'.repeat(Math.max(header.length, attackStep.length) + 4);
-    return `\n┌${border}┐\n│ ${header.padEnd(border.length - 2)} │\n├${border}┤\n│ ${attackStep.padEnd(border.length - 2)} │\n│ Target Asset: ${asset || 'N/A'}${' '.repeat(Math.max(0, border.length - 15 - (asset ? asset.length : 3)))}│\n│ Recommended Tool: ${recommendedTool || 'N/A'}${' '.repeat(Math.max(0, border.length - 22 - (recommendedTool ? recommendedTool.length : 3)))}│\n└${border}┘`;
+    const header = `${prefix} ${trainingStepNumber}/${totalSteps}`;
+    const border = '─'.repeat(Math.max(header.length, trainingStep.length) + 4);
+    return `\n┌${border}┐\n│ ${header.padEnd(border.length - 2)} │\n├${border}┤\n│ ${trainingStep.padEnd(border.length - 2)} │\n│ Target Asset: ${asset || 'N/A'}${' '.repeat(Math.max(0, border.length - 15 - (asset ? asset.length : 3)))}│\n│ Recommended Tool: ${recommendedTool || 'N/A'}${' '.repeat(Math.max(0, border.length - 22 - (recommendedTool ? recommendedTool.length : 3)))}│\n└${border}┘`;
   }
 
   processAttackStep(input) {
     try {
       this.validateInput(input);
-      if (input.attackStepNumber > input.totalAttackSteps) {
-        input.totalAttackSteps = input.attackStepNumber;
+      if (input.trainingStepNumber > input.totalSteps) {
+        input.totalSteps = input.trainingStepNumber;
       }
-      this.attackSteps.push(input);
+      this.trainingSteps.push(input);
       const formattedAttackStep = this.formatAttackStep(input);
       console.error(formattedAttackStep);
       return {
         content: [{
           type: "text",
           text: JSON.stringify({
-            attackStepNumber: input.attackStepNumber,
-            totalAttackSteps: input.totalAttackSteps,
-            nextAttackStepNeeded: input.nextAttackStepNeeded,
-            attackStepCount: this.attackSteps.length,
+            trainingStepNumber: input.trainingStepNumber,
+            totalSteps: input.totalSteps,
+            nextStepNeeded: input.nextStepNeeded,
+            trainingStepCount: this.trainingSteps.length,
             asset: input.asset,
             recommendedTool: input.recommendedTool,
             critical: input.critical || false
@@ -79,50 +78,57 @@ class ReasonerServer {
 }
 
 const REASONER_TOOL = {
-  name: "pentestthinking",
-  description: "A pentest reasoning engine that helps break down and analyze attack paths step by step",
+  name: "EncoderThinking",
+  description: "An encoder-decoder training reasoning engine that helps LLMs think like ML engineers and guide step-by-step encoder-decoder development",
   inputSchema: {
     type: "object",
     properties: {
-      attackStep: {
+      trainingStep: {
         type: "string",
-        description: "The current attack step description"
+        description: "Current training step or action in the encoder-decoder development"
       },
-      attackStepNumber: {
+      stepNumber: {
         type: "integer",
-        description: "Current step number",
-        minimum: 1
+        description: "Current step number in the training pipeline (1-8)",
+        minimum: 1,
+        maximum: 8
       },
-      totalAttackSteps: {
+      totalSteps: {
         type: "integer",
-        description: "Estimated total steps needed",
-        minimum: 1
+        description: "Total expected steps in the training pipeline (always 8)",
+        minimum: 8,
+        maximum: 8
       },
-      nextAttackStepNeeded: {
+      nextStepNeeded: {
         type: "boolean",
-        description: "Whether another step is needed"
+        description: "Whether another training step is needed"
       },
-      asset: {
+      datasetPath: {
         type: "string",
-        description: "Target asset for this step"
+        description: "Path to the training dataset"
       },
-      recommendedTool: {
+      testDataPath: {
+        type: "string", 
+        description: "Path to the test dataset"
+      },
+      framework: {
         type: "string",
-        description: "Recommended tool for this step"
+        enum: ["pytorch", "tensorflow", "keras"],
+        description: "ML framework to use (pytorch, tensorflow, keras)"
       },
-      critical: {
-        type: "boolean",
-        description: "Is this step part of the critical path?"
+      projectFolder: {
+        type: "string",
+        description: "Folder to save all training artifacts and logs"
       }
     },
-    required: ["attackStep", "attackStepNumber", "totalAttackSteps", "nextAttackStepNeeded"]
+    required: ["trainingStep", "stepNumber", "totalSteps", "nextStepNeeded"]
   }
 };
 
 // Initialize MCP server
 const server = new Server(
   {
-    name: "pentestthinkingMCP",
+    name: "EncoderThinkingMCP",
     version: "1.0.0",
   },
   {
@@ -141,7 +147,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 
 // Register tool execution handler
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  if (request.params.name === "pentestthinking") {
+  if (request.params.name === "EncoderThinking") {
     return reasonerServer.processAttackStep(request.params.arguments);
   }
   return {
