@@ -1,9 +1,4 @@
-#!/usr/bin/env node
-
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
-import express from 'express';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -127,84 +122,42 @@ const REASONER_TOOL = {
   }
 };
 
-// Initialize MCP server
-const server = new Server(
-  {
-    name: "EncoderThinkingMCP",
-    version: "1.0.0",
-  },
-  {
-    capabilities: {
-      tools: {},
+
+// Export the createServer function for Smithery
+export default function createServer({ config }) {
+  // Initialize MCP server
+  const server = new Server(
+    {
+      name: "EncoderThinkingMCP",
+      version: "1.0.0",
     },
-  }
-);
+    {
+      capabilities: {
+        tools: {},
+      },
+    }
+  );
 
-const reasonerServer = new ReasonerServer();
+  const reasonerServer = new ReasonerServer();
 
-// Register tool listing handler
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: [REASONER_TOOL],
-}));
+  // Register tool listing handler
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({
+    tools: [REASONER_TOOL],
+  }));
 
-// Register tool execution handler
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  if (request.params.name === "EncoderThinking") {
-    return reasonerServer.processAttackStep(request.params.arguments);
-  }
-  return {
-    content: [{
-      type: "text",
-      text: `Unknown tool: ${request.params.name}`
-    }],
-    isError: true
-  };
-});
+  // Register tool execution handler
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    if (request.params.name === "EncoderThinking") {
+      return reasonerServer.processAttackStep(request.params.arguments);
+    }
+    return {
+      content: [{
+        type: "text",
+        text: `Unknown tool: ${request.params.name}`
+      }],
+      isError: true
+    };
+  });
 
-// Start the server
-async function runServer() {
-  const port = process.env.PORT || 3000;
-  
-  // Check if we should use HTTP/SSE transport (for Smithery) or stdio
-  if (process.env.NODE_ENV === 'production' || process.env.SMITHERY_DEPLOYMENT) {
-    const app = express();
-    app.use(express.json());
-    
-    // Health check endpoint
-    app.get('/health', (req, res) => {
-      res.json({ status: 'ok', service: 'EncoderThinkingMCP' });
-    });
-    
-    // MCP endpoint
-    app.post('/mcp', async (req, res) => {
-      try {
-        const { method, params } = req.body;
-        
-        if (method === 'tools/list') {
-          const result = await server.request({ method: 'tools/list' }, ListToolsRequestSchema);
-          res.json(result);
-        } else if (method === 'tools/call') {
-          const result = await server.request({ method: 'tools/call', params }, CallToolRequestSchema);
-          res.json(result);
-        } else {
-          res.status(400).json({ error: 'Unknown method' });
-        }
-      } catch (error) {
-        res.status(500).json({ error: error.message });
-      }
-    });
-    
-    app.listen(port, () => {
-      console.error(`Reasoner MCP Server running on HTTP port ${port}`);
-    });
-  } else {
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
-    console.error("Reasoner MCP Server running on stdio");
-  }
+  return server;
 }
-
-runServer().catch((error) => {
-  console.error("Fatal error running server:", error);
-  process.exit(1);
-});
