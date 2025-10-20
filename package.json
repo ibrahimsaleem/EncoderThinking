@@ -1,0 +1,59 @@
+{
+  "name": "autoencoder-thinking-mcp",
+  "version": "1.0.0",
+  "description": "An autoencoder training reasoning engine that helps LLMs think like ML engineers and guide step-by-step autoencoder development.",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "./src/index.ts",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npx @smithery/cli build",
+    "dev": "npx @smithery/cli dev",
+    "start": "node dist/index.js",
+    "clean": "shx rm -rf dist",
+    "prebuild": "npm run clean",
+    "test": "jest",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "*",
+    "chalk": "^5.3.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@smithery/cli": "^1.0.0",
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "@types/uuid": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.5.0",
+    "prettier": "^3.0.0",
+    "shx": "^0.3.4",
+    "ts-jest": "^29.1.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "reasoning",
+    "beam-search",
+    "monte-carlo-tree-search",
+    "ai",
+    "search",
+    "machine-learning",
+    "autoencoder",
+    "neural-networks",
+    "pytorch",
+    "tensorflow",
+    "keras"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
