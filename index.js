@@ -3,6 +3,7 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import express from 'express';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -166,9 +167,36 @@ async function runServer() {
   
   // Check if we should use HTTP/SSE transport (for Smithery) or stdio
   if (process.env.NODE_ENV === 'production' || process.env.SMITHERY_DEPLOYMENT) {
-    const transport = new SSEServerTransport('/sse', server);
-    await server.connect(transport);
-    console.error(`Reasoner MCP Server running on HTTP port ${port}`);
+    const app = express();
+    app.use(express.json());
+    
+    // Health check endpoint
+    app.get('/health', (req, res) => {
+      res.json({ status: 'ok', service: 'EncoderThinkingMCP' });
+    });
+    
+    // MCP endpoint
+    app.post('/mcp', async (req, res) => {
+      try {
+        const { method, params } = req.body;
+        
+        if (method === 'tools/list') {
+          const result = await server.request({ method: 'tools/list' }, ListToolsRequestSchema);
+          res.json(result);
+        } else if (method === 'tools/call') {
+          const result = await server.request({ method: 'tools/call', params }, CallToolRequestSchema);
+          res.json(result);
+        } else {
+          res.status(400).json({ error: 'Unknown method' });
+        }
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+    
+    app.listen(port, () => {
+      console.error(`Reasoner MCP Server running on HTTP port ${port}`);
+    });
   } else {
     const transport = new StdioServerTransport();
     await server.connect(transport);
