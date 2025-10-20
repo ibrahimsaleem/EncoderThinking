@@ -2,6 +2,7 @@
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -161,9 +162,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 // Start the server
 async function runServer() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.error("Reasoner MCP Server running on stdio");
+  const port = process.env.PORT || 3000;
+  
+  // Check if we should use HTTP/SSE transport (for Smithery) or stdio
+  if (process.env.NODE_ENV === 'production' || process.env.SMITHERY_DEPLOYMENT) {
+    const transport = new SSEServerTransport('/sse', server);
+    await server.connect(transport);
+    console.error(`Reasoner MCP Server running on HTTP port ${port}`);
+  } else {
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+    console.error("Reasoner MCP Server running on stdio");
+  }
 }
 
 runServer().catch((error) => {
